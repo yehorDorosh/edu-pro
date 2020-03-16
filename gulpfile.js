@@ -48,23 +48,32 @@ gulp.task('clean', () => {
 });
 
 gulp.task('styles', () => {
-  return gulp.src('frontend/styles/main.sass')
+  return gulp.src(paths.src.styles, {since: gulp.lastRun('styles')})
     .pipe(plumber({ // применяет обработчик ошибок ко всем потокам сразу
       errorHandler: notify.onError(err => {
         return {
-          title: 'Styles',
+          title: 'Styles task error occured',
           message: err.message
         };
       })
     }))
+    .pipe(newer(paths.dest.styles))
+    .pipe(debug({title: 'styles'}))
     .pipe(gulpIf(isDev, sourcemaps.init()))
     .pipe(sass())
-    .pipe(gulpIf(isDev, sourcemaps.write('.'))) // по умолчанию сорсмап пишется в тот же файл как коментарий, параметр '.' создаст отдельный файл для соср мапа
-    .pipe(gulp.dest('public'));
+    .pipe(gulpIf(isDev, sourcemaps.write())) // по умолчанию сорсмап пишется в тот же файл как коментарий, параметр '.' создаст отдельный файл для соср мапа
+    .pipe(gulp.dest(paths.dest.styles));
+});
+
+gulp.task('watch', () => {
+  gulp.watch(paths.src.styles, gulp.series('styles'))
 });
 
 gulp.task('build', gulp.series(
   'clean',
+  'styles',
   gulp.parallel('img', 'html')
   )
 );
+
+gulp.task( 'dev', gulp.series('build', 'watch'));
