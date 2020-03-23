@@ -11,10 +11,13 @@
   "author": "Egor Dorosh",
   "license": "ISC",
   "devDependencies": {
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.0",
     "browser-sync": "^2.26.7",
     "del": "^5.1.0",
     "eslint": "^6.8.0",
     "gulp": "^4.0.2",
+    "gulp-babel": "^8.0.0",
     "gulp-debug": "^4.0.0",
     "gulp-if": "^3.0.0",
     "gulp-newer": "^1.4.0",

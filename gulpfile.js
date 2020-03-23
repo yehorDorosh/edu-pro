@@ -10,6 +10,7 @@ const browserSync = require('browser-sync').create();
 const notify = require('gulp-notify'); // обработчик ошибок
 const newer = require('gulp-newer');
 const plumber = require('gulp-plumber'); // навешивает обрадотчик ошибок на все потоки таски
+const babel = require('gulp-babel');
 
 sass.compiler = require('node-sass');
 const isDev = !process.env.NODE_ENV || process.env.NODE_ENV == 'dev';
@@ -20,12 +21,14 @@ const paths = {
   src: {
     img: `${srcName}/img/**/*.*`,
     html: `${srcName}/html/**/*.html`,
-    styles: `${srcName}/styles/**/*.sass`
+    styles: `${srcName}/styles/**/*.sass`,
+    scripts: `${srcName}/js/**/*.js`
   },
   dest: {
     img: `${destName}/img`,
     html: `${destName}`,
     styles: `${destName}/styles`,
+    scripts: `${destName}/js`
   }
 }
 
@@ -65,15 +68,38 @@ gulp.task('styles', () => {
     .pipe(gulp.dest(paths.dest.styles));
 });
 
+gulp.task('scripts', () => {
+  return gulp.src(paths.src.scripts, {since: gulp.lastRun('scripts')})
+    .pipe(newer(paths.dest.scripts))
+    .pipe(debug({title: 'scripts'}))
+    .pipe(gulpIf(isDev, sourcemaps.init()))
+    .pipe(babel({
+        presets: ['@babel/env']
+    }))
+    .pipe(gulpIf(isDev, sourcemaps.write()))
+    .pipe(gulp.dest(paths.dest.scripts));
+});
+
+gulp.task('serve', () =>{
+  browserSync.init({
+    server: destName // можно убрать параметр, тогда нужно в ручную добавить на страницу скрип, в консоле пропишется штмл вставки
+  });
+  browserSync.watch(`${destName}/**/*.*`).on('change', browserSync.reload);
+});
+
 gulp.task('watch', () => {
-  gulp.watch(paths.src.styles, gulp.series('styles'))
+  gulp.watch(paths.src.img, gulp.series('img'));
+  gulp.watch(paths.src.html, gulp.series('html'));
+  gulp.watch(paths.src.styles, gulp.series('styles'));
+  gulp.watch(paths.src.scripts, gulp.series('scripts'));
 });
 
 gulp.task('build', gulp.series(
   'clean',
   'styles',
+  'scripts',
   gulp.parallel('img', 'html')
   )
 );
 
-gulp.task( 'dev', gulp.series('build', 'watch'));
+gulp.task( 'dev', gulp.series('build', gulp.parallel('watch', 'serve')));
